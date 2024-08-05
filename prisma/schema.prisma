@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id              String           @id @unique @default(uuid())
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  firstName       String           @db.VarChar(100)
+  lastName        String           @db.VarChar(100)
+  password        String           @unique @db.VarChar(100)
+  email           String           @unique @db.VarChar(100)
+  role            String           @db.VarChar(100)
+  ratings         Rating[]
+  userFiles       UserFiles[]
+  businessOwnerOf BusinessEntity[] @relation("BusinessOwners")
+
+  @@map("users")
+}
+
+model BusinessEntity {
+  businessEntityID      String                  @id @default(uuid())
+  businessName          String                  @unique @db.VarChar(150)
+  businessDescription   String                  @db.VarChar(1000)
+  category              String                  @db.VarChar(100)
+  phoneNumber           String                  @db.VarChar(30)
+  email                 String                  @unique @db.VarChar(80)
+  logo                  String                  @db.VarChar(100)
+  address               String                  @db.VarChar(100)
+  businessStartDate     String                  @db.VarChar(100)
+  certified             Boolean                 @default(false)
+  verified              Boolean                 @default(false)
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  businessOwners        User[]                  @relation("BusinessOwners")
+  ratings               Rating[]
+  businessFiles         BusinessFiles[]
+  blacklistedBusinesses BlacklistedBusinesses[]
+
+  @@map("businesses")
+}
+
+model Rating {
+  ratingID         String         @id @default(uuid())
+  user             User           @relation(fields: [userID], references: [id])
+  userID           String
+  businessEntity   BusinessEntity @relation(fields: [businessEntityID], references: [businessEntityID])
+  businessEntityID String
+  ratingValue      Int
+  comments         String         @db.VarChar(1000)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@map("ratings")
+}
+
+model UserFiles {
+  fileID    String   @id @default(uuid())
+  user      User     @relation(fields: [userID], references: [id])
+  userID    String
+  link      String?  @unique
+  fileName  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("userfiles")
+}
+
+model BusinessFiles {
+  fileID           String         @id @default(uuid())
+  businessEntity   BusinessEntity @relation(fields: [businessEntityID], references: [businessEntityID])
+  businessEntityID String
+  fileName         String
+  link             String?        @unique
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@map("businessfiles")
+}
+
+model BlacklistedBusinesses {
+  id               String         @id @default(uuid())
+  businessEntity   BusinessEntity @relation(fields: [businessEntityID], references: [businessEntityID])
+  businessEntityID String         @unique
+  dateBlacklisted  DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@map("blacklist")
+}
